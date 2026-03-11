@@ -19,18 +19,18 @@ st.set_page_config(page_title="LME 글로벌 모니터링", layout="wide")
 @st.cache_data(ttl=3600)
 def fetch_exchange_rate():
     try:
-        response = requests.get(EXCHANGE_URL, headers=HEADERS, timeout=15)
-        response.encoding = 'utf-8'
-        soup = BeautifulSoup(response.text, 'html.parser')
-        target_div = soup.select_one('div.table_type, div[class^="table_type"]')
-        rows = target_div.find_all('tr') if target_div else soup.find_all('tr')
-        for row in rows:
-            if 'USD' in row.get_text():
-                match = re.search(r'(\d+,\d+\.\d+|\d+\.\d+)', row.get_text())
-                if match:
-                    return float(match.group(1).replace(',', ''))
-        return 1450.0  # 실패 시 최근 평균 환율
-    except:
+        # 야후 파이낸스의 원/달러 환율 티커: KRW=X
+        exchange_data = yf.Ticker("KRW=X")
+        # 최신 종가 데이터 가져오기
+        current_rate = exchange_data.history(period="1d")['Close'].iloc[-1]
+
+        if current_rate > 1000:  # 정상적인 환율 범위인지 확인
+            return float(current_rate)
+        else:
+            return 1450.0  # 비정상 데이터 시 예비값
+    except Exception as e:
+        # 에러 발생 시 로그를 남기고 예비 환율 반환
+        print(f"환율 수집 오류: {e}")
         return 1450.0
 
 
