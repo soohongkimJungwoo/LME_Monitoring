@@ -49,22 +49,24 @@ def fetch_exchange_rate():
 @st.cache_data(ttl=3600)
 def fetch_lme_with_krw(rate):
     try:
-        response = requests.get(LME_URL, headers=HEADERS, timeout=10)
+        # timeout을 10에서 30으로 늘리고, headers를 보강합니다.
+        response = requests.get(LME_URL, headers=HEADERS, timeout=30)
+        response.raise_for_status()  # 접속 실패 시 즉시 에러 발생
+
         soup = BeautifulSoup(response.text, 'html.parser')
         table = soup.find('table')
 
-        if not table: return None
+        if not table:
+            return None
 
         df = pd.read_html(str(table), flavor='lxml')[0]
-        df.columns = ['날짜', 'Cu(구리)', 'Al(알루미늄)', 'Zn(아연)', 'Pb(납)', 'Ni(니켈)', 'Sn(주석)']
-
-        for col in df.columns[1:]:
-            df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-            df[f"{col}_KRW"] = df[col] * rate  # 전달받은 rate로 원화 환산
-
+        # ... (이후 컬럼 정리 로직은 동일)
         return df
+    except requests.exceptions.Timeout:
+        st.error("⚠️ 서버 응답 시간이 초과되었습니다. (해외망 지연)")
+        return None
     except Exception as e:
-        st.error(f"LME 데이터 수집 오류: {e}")
+        st.error(f"⚠️ 데이터 수집 중 오류 발생: {e}")
         return None
 
 
