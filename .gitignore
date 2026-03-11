@@ -1,0 +1,10 @@
+# 가상환경 폴더만 제외 (끝에 슬래시 / 확인)
+etc/
+Lib/
+Scripts/
+share/
+pyvenv.cfg
+
+# 파이썬 캐시 제외
+__pycache__/
+*.pyc
