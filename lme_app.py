@@ -46,14 +46,16 @@ def fetch_global_lme(rate):
 
     if not combined_data: return None
 
+    # 데이터 병합 및 결측치 처리 (수정된 부분)
     df = pd.concat(combined_data, axis=1).sort_index(ascending=False).reset_index()
-    df = df.fillna(method='ffill').fillna(method='bfill')
+
+    # ffill()과 bfill()을 직접 호출하여 결측치를 채웁니다.
+    df = df.ffill().bfill()
 
     for name in tickers.keys():
         if name in df.columns:
             if name == "Cu(구리)":
                 df[name] = df[name] * 2204.62
-                # 원화 환산 컬럼 미리 생성
             df[f"{name}_KRW"] = df[name] * rate
 
     return df
